@@ -36,7 +36,7 @@ public class AStarMind : AbstractPathMind
     }
     public override Locomotion.MoveDirection GetNextMove(BoardInfo boardInfo, CellInfo currentPos, CellInfo[] goals)
     {
-  
+        throw new System.NotImplementedException();
     }
 
     public override void Repath()
