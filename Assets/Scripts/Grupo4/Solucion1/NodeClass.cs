@@ -36,13 +36,13 @@ public class Node : IComparable<Node>
 
     public int CompareTo(Node other)
     {
-        if (this.fStar > other.fStar)
-        {
-            return -1;
-        }
-        else if (this.fStar < other.fStar)
+        if (fStar > other.fStar)
         {
             return 1;
+        }
+        else if (fStar < other.fStar)
+        {
+            return -1;
         }
         else
         {
