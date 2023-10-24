@@ -1,10 +1,12 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Node
+
+public class Node : IComparable<Node>
 {
-    //Atributos
+    //Atributos de la clase
     public Node father;
     public int x;
     public int y;
@@ -30,7 +32,22 @@ public class Node
 
         hStar = hP;
         fStar = g + hStar;
-    }  
+    }
 
+    public int CompareTo(Node other)
+    {
+        if (this.fStar > other.fStar)
+        {
+            return -1;
+        }
+        else if (this.fStar < other.fStar)
+        {
+            return 1;
+        }
+        else
+        {
+            return 0;
 
+        } 
+    }
 }
