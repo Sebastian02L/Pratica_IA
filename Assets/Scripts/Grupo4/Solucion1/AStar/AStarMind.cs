@@ -9,75 +9,82 @@ using UnityEngine.UIElements;
 using System;
 using JetBrains.Annotations;
 
+/////////////////////////////////// Clase AStarMind, que emplea el algoritmo A* ///////////////////////////////////
 public class AStarMind : AbstractPathMind
 {
-    public List<Node> openList = new List<Node>();
-    public List<Node> plan = new List<Node>();
+    /////////////////////////////////// Atributos de la clase /////////////////////////////////// 
+    
+    public List<Node> openList = new List<Node>();              //Lista abierta, donde se meteran los nodos no evaluados
+    public List<Node> plan = new List<Node>();                  //Lista plan, donde se guardaran los nodos que conforman el plan que debe hacer el agente para llegar a la meta
 
-    public void AStarMethod(BoardInfo boardInfo, CellInfo currentPos, CellInfo[] goals)
+    /////////////////////////////////// Metodo AStarMethod ///////////////////////////////////
+
+    public void AStarMethod(BoardInfo boardInfo, CellInfo currentPos, CellInfo[] goals) //Realiza el algoritmo A*
     {
-        bool goalReached = false;
+        bool goalReached = false;                                                       //Booleano que indica si se ha llegado a un nodo meta
 
-        int heuristic = Math.Abs((goals[0].ColumnId - currentPos.ColumnId)) + Math.Abs((goals[0].RowId - currentPos.RowId)); // Heuristica del nodo raiz
-        openList.Add(new Node(null, currentPos.ColumnId, currentPos.RowId, heuristic));                             // Metemos la raiz en la lista abierta
+        //Primero, creamos el nodo origen, calculamos su heuristica
+        int heuristic = Math.Abs((goals[0].ColumnId - currentPos.ColumnId)) + Math.Abs((goals[0].RowId - currentPos.RowId)); // Heuristica utilizada: Suma de Distancias Manhattan
+        openList.Add(new Node(null, currentPos.ColumnId, currentPos.RowId, heuristic));                                      // Agregamos el nodo creado a la lista abierta
 
         //Bucle A*
-        while(openList.Count != 0 && !goalReached){
-            //Almacenamos el primer elemento de la lista
-            Node currentNode = openList.ElementAt(0);
+        while(openList.Count != 0 && !goalReached){           //Mientras la lista tenga nodos dentro y goalReached valga false
 
-            //Eliminamos el primer elemento de la lista
-            openList.RemoveAt(0);
+     
+            Node currentNode = openList.ElementAt(0);         //Almacenamos el primer elemento de la lista en una variable llamada currentNode
 
-            //Comprobamos si es meta
-            if (goal(currentNode, goals)) { 
-                //Si es meta, lo metemos en la lista plan
-                plan.Add(currentNode);
-                goalReached = true;
-                Debug.Log("Meta alcanzada");
+            openList.RemoveAt(0);                             //Eliminamos el primer elemento de la lista
+
+            
+            if (goal(currentNode, goals)) {                   //Comprobamos si currentNode es meta, en caso afirmativo
+                plan.Add(currentNode);                        //Agregamos el nodo a la lista plan
+                goalReached = true;                           //Cambiamos el valor de goalReached de false a true
+                Debug.Log("Meta alcanzada");                  //Mostramos un mensaje por la consola
             }
-            else
+            else                                              //En caso de que currentNode no sea un nodo meta
             {
-                //Expandimos el nodo, guardamnos los hijos en la lista abierta y los ordenamos
-                expand(currentNode, boardInfo, goals);
+                expand(currentNode, boardInfo, goals);        //Usamos el metodo expand para expandir el nodo
 
-                // Ordenamos la lista en funcion del valor de fStar
-                openList.Sort();
+                openList.Sort();                              // Ordenamos la lista abierta con el metodo Sort, que usara el metodo Compare To de la clase Nodo
             }
 
-            if (openList.Count > (boardInfo.NumColumns * boardInfo.NumRows))
+            //En el caso de que en la lista abierta hayan mas nodos que el resultado de multiplicar el numero de columnas por el numero de filas del tablero
+            if (openList.Count > (boardInfo.NumColumns * boardInfo.NumRows)) 
             {
-                Debug.Log("No hay solucion");
-                break;
+                Debug.Log("No hay solucion");                 //Mostramos por pantalla que no hay solucion
+                break;                                        //Salimos del bucle
             }
         }
 
-        if (plan.Count != 0)
+        if (plan.Count != 0)                                 //Verificamos, una vez terminado el bucle, si hay algun elemento en la lista plan, en caso afirmativo
         {
-            int i = 0;
+            int i = 0;                                       //Declaramos una variable auxiliar i que tendra como valor inicial cero
 
-            while (plan.ElementAt(i).father != null)
+            while (plan.ElementAt(i).father != null)         //Mientras el valor de la variable father del nodo actual sea distinto de null
             {
-                plan.Add(plan.ElementAt(i).father);
-                i++;
+                plan.Add(plan.ElementAt(i).father);          //Agregamos a la lista plan al padre referenciado en la variable father, construyendo el plan desde la meta hasta el origen
+                i++;                                         //Aumentamos el valor de i
             }
 
-            plan.Reverse();
+            plan.Reverse();                                  //Al final del bucle, el plan esta ordenado desde la meta al origen, por lo que usamos el metodo Reverse para ordenarlo
         }
-        else
+        else                                                 //Si la lista plan esta vacia al terminar el bucle
         {
-            Debug.Log("No hay solucion");
+            Debug.Log("No hay solucion");                    //Mostramos por pantalla que no hay solucion
         }
     }
-    public override Locomotion.MoveDirection GetNextMove(BoardInfo boardInfo, CellInfo currentPos, CellInfo[] goals)
-    {
-        if (plan.Count == 0)
-        {
-            AStarMethod(boardInfo, currentPos, goals);
 
-            return Locomotion.MoveDirection.None;
+    /////////////////////////////////// Metodo GetNextMove ///////////////////////////////////
+
+    public override Locomotion.MoveDirection GetNextMove(BoardInfo boardInfo, CellInfo currentPos, CellInfo[] goals)  //Devuelve el movimiento que debe hacer el agente
+    {
+        if (plan.Count == 0)                                                    //Si la lista plan esta vacia
+        {
+            AStarMethod(boardInfo, currentPos, goals);                          //Hace una llamada al metodo AStarMethod
+
+            return Locomotion.MoveDirection.None;                               //Le dice al agente que no haga ningun movimiento
         }
-        else
+        else                                                                    //Si la lista no esta vacia
         {
 
             Node move = plan.ElementAt(0);
