@@ -25,7 +25,7 @@ public class AStarMind : AbstractPathMind
 
         //Primero, creamos el nodo origen, calculamos su heuristica
         int heuristic = Math.Abs((goals[0].ColumnId - currentPos.ColumnId)) + Math.Abs((goals[0].RowId - currentPos.RowId)); // Heuristica utilizada: Suma de Distancias Manhattan
-        openList.Add(new Node(null, currentPos.ColumnId, currentPos.RowId, heuristic));                                      // Agregamos el nodo creado a la lista abierta
+        openList.Add(new Node(null, currentPos.ColumnId, currentPos.RowId, heuristic));                                      // Agregamos el nodo origen creado a la lista abierta
 
         //Bucle A*
         while(openList.Count != 0 && !goalReached){           //Mientras la lista tenga nodos dentro y goalReached valga false
@@ -36,7 +36,7 @@ public class AStarMind : AbstractPathMind
             openList.RemoveAt(0);                             //Eliminamos el primer elemento de la lista
 
             
-            if (goal(currentNode, goals)) {                   //Comprobamos si currentNode es meta, en caso afirmativo
+            if (goal(currentNode, goals)) {                   //Comprobamos si currentNode es meta con el metodo goal, en caso afirmativo
                 plan.Add(currentNode);                        //Agregamos el nodo a la lista plan
                 goalReached = true;                           //Cambiamos el valor de goalReached de false a true
                 Debug.Log("Meta alcanzada");                  //Mostramos un mensaje por la consola
@@ -45,7 +45,7 @@ public class AStarMind : AbstractPathMind
             {
                 expand(currentNode, boardInfo, goals);        //Usamos el metodo expand para expandir el nodo
 
-                openList.Sort();                              // Ordenamos la lista abierta con el metodo Sort, que usara el metodo Compare To de la clase Nodo
+                openList.Sort();                              // Ordenamos la lista abierta con el metodo Sort, que usara el metodo CompareTo de la clase Nodo
             }
 
             //En el caso de que en la lista abierta hayan mas nodos que el resultado de multiplicar el numero de columnas por el numero de filas del tablero
@@ -87,25 +87,27 @@ public class AStarMind : AbstractPathMind
         else                                                                    //Si la lista no esta vacia
         {
 
-            Node move = plan.ElementAt(0);
-            plan.RemoveAt(0);
+            Node move = plan.ElementAt(0);                                      //Move toma el valor del nodo que se encuentra en la posicion 0 de la lista plan
+            plan.RemoveAt(0);                                                   //Eliminamos dicho nodo de la lista plan
 
-            if (currentPos.ColumnId == move.x && currentPos.RowId > move.y)
+            //En este punto, se comprueban las diferencias entre las coordenadas de la celda del nodo y la de personaje, para determinar el movimiento del agente
+            
+            if (currentPos.ColumnId == move.x && currentPos.RowId > move.y)     //Si las coordenadas x son iguales pero la y del jugador es mayor que la del nodo
             {
-                return Locomotion.MoveDirection.Down;
+                return Locomotion.MoveDirection.Down;                           //Se le dice al agente que se mueva para abajo
             }
 
-            if (currentPos.ColumnId == move.x && currentPos.RowId < move.y)
+            if (currentPos.ColumnId == move.x && currentPos.RowId < move.y)     //Si las coordenadas x son iguales pero la y del jugador es menor que la del nodo
             {
-                return Locomotion.MoveDirection.Up;
+                return Locomotion.MoveDirection.Up;                             //Se le dice al agente que se mueva para arriba
             }
 
-            if (currentPos.ColumnId < move.x && currentPos.RowId == move.y)
+            if (currentPos.ColumnId < move.x && currentPos.RowId == move.y)     //Si las coordenadas y son iguales pero la x del jugador es menor que la del nodo
             {
-                return Locomotion.MoveDirection.Right;
+                return Locomotion.MoveDirection.Right;                          //Se le dice al agente que se mueva a la derecha
             }
-
-            return Locomotion.MoveDirection.Left;
+            //Si no se cumple ninguna de las condiciones anteriores
+            return Locomotion.MoveDirection.Left;                               //Se le dice al agente que se mueva a la izquierda          
         }
     }
 
@@ -114,45 +116,52 @@ public class AStarMind : AbstractPathMind
         
     }
 
-    public bool goal(Node node, CellInfo[] goal)
+    /////////////////////////////////// Metodo goal ///////////////////////////////////
+
+    public bool goal(Node node, CellInfo[] goal) //Comprueba si el nodo que se esta evaluando es meta
     {
-        if (node.x == goal[0].ColumnId && node.y == goal[0].RowId)
+        if (node.x == goal[0].ColumnId && node.y == goal[0].RowId)             //Si las coordenadas del nodo coinciden con las coordenadas de las metas
         {
-            return true;
+            return true;                                                       //Devuelve true
         }
-        else { 
-            return false;
+        else                                                                   //En el caso contrario
+        {
+            return false;                                                      //Devuelve false
         }
     }
 
-    public void expand(Node currentNode, BoardInfo board, CellInfo[] goals)
+    /////////////////////////////////// Metodo expand ///////////////////////////////////
+
+    public void expand(Node currentNode, BoardInfo board, CellInfo[] goals) //Expande el nodo recibido para obtener a los hijos del mismo
     {
-        CellInfo actualPosition = new CellInfo(currentNode.x, currentNode.y);
+        CellInfo actualPosition = new CellInfo(currentNode.x, currentNode.y);   //Usamos una variable actualPosition que tendrá las coordenas del nodo pasado
 
         //Guardamos los hijos del nodo actual en un array
-        CellInfo[] childs = actualPosition.WalkableNeighbours(board);
-
+        CellInfo[] childs = actualPosition.WalkableNeighbours(board);           //En un array de CellInfo guardamos lo que devuelve la funcion WalkeableNeighbours
+                                                                                //Devolviendo nulo si el vecino no es caminable y CellInfo en caso de que lo sea
         //Creamos los nodos correspondientes a los hijos
         for (int i = 0; i < childs.Length; i++) {
-            if (childs[i] != null) {
+
+            if (childs[i] != null) {                                            //Si el elemento evaluado es distinto de nulo
                 //Calculo de la heuristica del hijo 
                 int heuristic = Math.Abs((goals[0].ColumnId - childs[i].ColumnId)) + Math.Abs((goals[0].RowId - childs[i].RowId));
 
-                bool repeatedNode = false;
-                Node nodeToInsert = new Node(currentNode, childs[i].ColumnId, childs[i].RowId, heuristic);
+                bool repeatedNode = false;                                      //Variable auxiliar para determinar si un nodo esta repetido
+               
+                Node nodeToInsert = new Node(currentNode, childs[i].ColumnId, childs[i].RowId, heuristic); //Creacion del nodo hijo
 
-                foreach (Node node in openList)
+                foreach (Node node in openList)                                 //Se comprueba si el nodo creado es repetido
                 {
-                    if(nodeToInsert.x == node.x && nodeToInsert.y == node.y)
+                    if(nodeToInsert.x == node.x && nodeToInsert.y == node.y)    //En el caso de que haya un nodo con las mismas coordenadas en la lista abierta
                     {
-                        repeatedNode = true;
+                        repeatedNode = true;                                    //Indicamos que se trata de un nodo repetido(Por ejemplo, podria ser el padre)
                     }
                 }
 
-                if (!repeatedNode)
+                if (!repeatedNode)                                              //En el caso de que el nodo no este repetido
                 {
-                    //Creamos el nodo del hijo y lo insertamos a la lista abierta
-                    openList.Add(nodeToInsert);
+
+                    openList.Add(nodeToInsert);                                 //Se inserta el nodo en la lista abierta
                 }
             }
         }
